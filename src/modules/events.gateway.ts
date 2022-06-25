@@ -1,27 +1,17 @@
 import { MessageBody, SubscribeMessage, WebSocketGateway, OnGatewayConnection, WebSocketServer, OnGatewayDisconnect, ConnectedSocket } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 
-@WebSocketGateway({ transports: ['websocket'] })
+@WebSocketGateway({ pingTimeout: 30000 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @WebSocketServer()
-  server;
+  server: Server;
   client: any;
   wsClients = [];
 
-  handleConnection(client: any, @MessageBody() data: string, @ConnectedSocket() socket: Socket): void {
+  handleConnection(client: any, @MessageBody() data: string): void {
     this.client = client;
     console.log("client connected")
-    this.wsClients.push({
-      id: client.id,
-      username: client.handshake.query.username,
-      status: "online"
-    });
-    let result = this.wsClients.filter(user => client.handshake.query.username != user.username)
-      .map((user) => {
-        return { username: user.username, status: user.status }
-      });
-    client.emit('fetchPlayersList', JSON.stringify(result));
   }
 
   handleDisconnect(client: any): void {
@@ -41,7 +31,17 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('playerJoined')
   handlePlayerJoin(@ConnectedSocket() socket: Socket, @MessageBody() data: string): void {
     console.log('handlePlayerJoin', data)
-    socket.broadcast.emit('playerJoined', JSON.stringify({ username: data, status: "online" }));
+    this.wsClients.push({
+      id: socket.id,
+      username: data,
+      status: "online"
+    });
+    let result = this.wsClients.filter(user => data != user.username)
+      .map((user) => {
+        return { username: user.username, status: user.status }
+      });
+    socket.broadcast.emit('playerJoined', data);
+    this.client.emit('fetchPlayersList', result);
   }
 
   @SubscribeMessage('playerLeft')
