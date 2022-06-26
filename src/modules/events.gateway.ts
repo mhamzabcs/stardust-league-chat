@@ -40,7 +40,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .map((user) => {
         return { username: user.username, status: user.status }
       });
-    socket.broadcast.emit('playerJoined', data);
+    socket.broadcast.emit('playerJoined', { username: data, status: "online" });
     this.client.emit('fetchPlayersList', result);
   }
 
@@ -48,6 +48,12 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handlePlayerLeft(@ConnectedSocket() socket: Socket, @MessageBody() data: string): void {
     console.log('handlePlayerLeft', data)
     socket.broadcast.emit('playerLeft', data);
+  }
+
+  @SubscribeMessage('updatePlayerStatus')
+  handlePlayerStatusUpdate(@ConnectedSocket() socket: Socket, @MessageBody() data: { username, status }): void {
+    console.log('handlePlayerStatusUpdate', data)
+    socket.broadcast.emit('updatePlayerStatus', { username: data.username, status: data.status });
   }
 
 
