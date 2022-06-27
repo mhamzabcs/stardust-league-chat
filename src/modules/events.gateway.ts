@@ -62,7 +62,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('newMessage')
   handleNewMessage(@ConnectedSocket() socket: Socket, @MessageBody() data: { username, text }): void {
     console.log('handleNewMessage', data);
-    let message = { username: data.username, message: data.text, sentAt: new Date().toDateString() };
+    let message = { username: data.username, text: data.text, sentAt: new Date().toDateString() };
     this.messages.push(message);
     if (this.messages.length > 50) {
       this.messages.splice(0, 1);
