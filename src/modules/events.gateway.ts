@@ -53,15 +53,17 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('updatePlayerStatus')
-  handlePlayerStatusUpdate(@ConnectedSocket() socket: Socket, @MessageBody() data: { username, status }): void {
-    console.log('handlePlayerStatusUpdate', data)
+  handlePlayerStatusUpdate(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+    console.log('handlePlayerStatusUpdate', body)
+    const data = JSON.parse(body);
     socket.broadcast.emit('updatePlayerStatus', { username: data.username, status: data.status });
   }
 
 
   @SubscribeMessage('newMessage')
-  handleNewMessage(@ConnectedSocket() socket: Socket, @MessageBody() data: { username, text }): void {
-    console.log('handleNewMessage', data);
+  handleNewMessage(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+    console.log('handleNewMessage', body);
+    const data = JSON.parse(body);
     let message = { username: data.username, text: data.text, sentAt: new Date().toDateString() };
     this.messages.push(message);
     if (this.messages.length > 50) {
