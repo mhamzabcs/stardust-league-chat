@@ -56,6 +56,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handlePlayerStatusUpdate(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
     console.log('handlePlayerStatusUpdate', body)
     const data = JSON.parse(body);
+    this.wsClients.forEach(client => {
+      if (data.username == client.username) {
+        client.status = data.status
+      }
+    });
     socket.broadcast.emit('updatePlayerStatus', { username: data.username, status: data.status });
   }
 
