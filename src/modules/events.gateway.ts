@@ -34,7 +34,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log('handlePlayerJoin', data)
     this.wsClients.push({
       id: socket.id,
-      username: data,
+      username: data ? data : "Guest" + Math.floor(Math.random() * 1000),
       status: "online"
     });
     let result = this.wsClients.filter(user => data != user.username)
