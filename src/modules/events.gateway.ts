@@ -79,4 +79,31 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.client.emit('messageSent', message);
   }
 
+  @SubscribeMessage('updateUsername')
+  handleUsernameChange(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+    console.log('handleUsernameChange', body);
+    const data = JSON.parse(body);
+    this.wsClients.forEach(client => {
+      if (data.oldUsername == client.username) {
+        client.username = data.newUsername
+      }
+    });
+    this.messages.forEach(message => {
+      if (data.oldUsername == message.username) {
+        message.username = data.newUsername
+      }
+    });
+  }
+
+  @SubscribeMessage('sendInvite')
+  handlePrivateInvite(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+    console.log('handlePrivateInvite', body);
+    const { receiver, sender, roomId } = JSON.parse(body);
+    this.wsClients.forEach(client => {
+      if (receiver == client.username) {
+        this.client.to(client.id).emit('newInvite', JSON.stringify({ sender, roomId }));
+      }
+    });
+  }
+
 }
