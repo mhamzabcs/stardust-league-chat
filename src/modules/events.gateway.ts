@@ -111,11 +111,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('inviteResponse')
   handleInviteResponse(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
     console.log('handleInviteResponse', body);
-    const { receiver, sender, status } = JSON.parse(body);
+    const { receiver, sender, status, roomId } = JSON.parse(body);
     if (sender != receiver) {
       this.wsClients.forEach(client => {
-        if (receiver == client.username) {
-          this.server.to(client.id).emit('inviteResponse', JSON.stringify({ receiver, sender, status }));
+        if (sender == client.username) {
+          this.server.to(client.id).emit('inviteResponse', JSON.stringify({ receiver, sender, status, roomId })); // added room id here too
         }
       });
     }
