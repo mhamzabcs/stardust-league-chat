@@ -99,11 +99,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handlePrivateInvite(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
     console.log('handlePrivateInvite', body);
     const { receiver, sender, roomId } = JSON.parse(body);
-    this.wsClients.forEach(client => {
-      if (receiver == client.username) {
-        this.client.to(client.id).emit('newInvite', JSON.stringify({ sender, roomId }));
-      }
-    });
+    if (sender != receiver) {
+      this.wsClients.forEach(client => {
+        if (receiver == client.username) {
+          this.server.to(client.id).emit('newInvite', JSON.stringify({ receiver, sender, roomId }));
+        }
+      });
+    }
   }
 
 }
