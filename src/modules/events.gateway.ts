@@ -1,5 +1,6 @@
 import { MessageBody, SubscribeMessage, WebSocketGateway, OnGatewayConnection, WebSocketServer, OnGatewayDisconnect, ConnectedSocket } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
+import { JsonparsePipe } from 'src/pipes/jsonparse.pipe';
 
 @WebSocketGateway({ pingTimeout: 30000 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -53,23 +54,21 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('updatePlayerStatus')
-  handlePlayerStatusUpdate(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+  handlePlayerStatusUpdate(@ConnectedSocket() socket: Socket, @MessageBody(new JsonparsePipe()) body: any): void {
     console.log('handlePlayerStatusUpdate', body)
-    const data = JSON.parse(body);
     this.wsClients.forEach(client => {
-      if (data.username == client.username) {
-        client.status = data.status
+      if (body.username == client.username) {
+        client.status = body.status
       }
     });
-    socket.broadcast.emit('updatePlayerStatus', { username: data.username, status: data.status });
+    socket.broadcast.emit('updatePlayerStatus', { username: body.username, status: body.status });
   }
 
 
   @SubscribeMessage('newMessage')
-  handleNewMessage(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+  handleNewMessage(@ConnectedSocket() socket: Socket, @MessageBody(new JsonparsePipe()) body: any): void {
     console.log('handleNewMessage', body);
-    const data = JSON.parse(body);
-    let message = { username: data.username, text: data.text, sentAt: new Date().toDateString() };
+    let message = { username: body.username, text: body.text, sentAt: new Date().toDateString() };
     this.messages.push(message);
     if (this.messages.length > 50) {
       this.messages.splice(0, 1);
@@ -80,25 +79,24 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('updateUsername')
-  handleUsernameChange(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+  handleUsernameChange(@ConnectedSocket() socket: Socket, @MessageBody(new JsonparsePipe()) body: any): void {
     console.log('handleUsernameChange', body);
-    const data = JSON.parse(body);
     this.wsClients.forEach(client => {
-      if (data.oldUsername == client.username) {
-        client.username = data.newUsername
+      if (body.oldUsername == client.username) {
+        client.username = body.newUsername
       }
     });
     this.messages.forEach(message => {
-      if (data.oldUsername == message.username) {
-        message.username = data.newUsername
+      if (body.oldUsername == message.username) {
+        message.username = body.newUsername
       }
     });
   }
 
   @SubscribeMessage('sendInvite')
-  handlePrivateInvite(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+  handlePrivateInvite(@ConnectedSocket() socket: Socket, @MessageBody(new JsonparsePipe()) body: any): void {
     console.log('handlePrivateInvite', body);
-    const { receiver, sender, roomId } = JSON.parse(body);
+    const { receiver, sender, roomId } = body;
     if (sender != receiver) {
       this.wsClients.forEach(client => {
         if (receiver == client.username) {
@@ -109,9 +107,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('inviteResponse')
-  handleInviteResponse(@ConnectedSocket() socket: Socket, @MessageBody() body: string): void {
+  handleInviteResponse(@ConnectedSocket() socket: Socket, @MessageBody(new JsonparsePipe()) body: any): void {
     console.log('handleInviteResponse', body);
-    const { receiver, sender, status, roomId } = JSON.parse(body);
+    const { receiver, sender, status, roomId } = body;
     if (sender != receiver) {
       this.wsClients.forEach(client => {
         if (sender == client.username) {
